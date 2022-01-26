@@ -1,0 +1,71 @@
+## --- Additional packages with Hardware to Simulator
+package vendingmachine.simul
+usbport = UsbPort
+
+# Generic modules to activate from Simulator
+kbd  = Keyboard("123456789*0#",4,3,1)
+lcd  = LCD
+m    = Switch ; "manut" ; setLabel("M")
+
+# Costume modules from Vending Machine package
+kb  = KeyBuffer
+coin = CoinAcceptor
+sr = SerialReceiverParity(5,6)
+dp  = Dispatcher
+dproduct = Dispenser
+
+## --- Project Links ---
+# --------------------------------------
+# KeyBoard Reader
+# --------------------------------------
+# Key Decode
+1 -> kbd.oe
+kbd.K[0-3]      -> kb.D[0-3]
+kb.K[0-3]       -> usbport.I[0-3]
+kbd.val         -> kb.DAV
+
+# Key Buffer
+kb.Dval         -> usbport.I4
+usbport.O7      -> kb.ACK
+kb.DAC          -> kbd.ack
+
+# --------------------------------------
+# IOS (Integrated Output System)
+# --------------------------------------
+# SERIAL
+usbport.O0 -> sr.SDX
+usbport.O1-> sr.SCLK
+dp.done -> sr.accept
+sr.busy -> usbport.I7
+
+# Dispatcher
+sr.DXval -> dp.Dval
+sr.D[1-5] -> dp.I[0-4]
+sr.D0 -> dp.LnD
+
+# --------------------------------------
+# LCD
+# --------------------------------------
+dp.D[1-4] -> lcd.D[4-7]
+dp.D0 -> lcd.rs
+dp.WrL -> lcd.e
+
+# --------------------------------------
+# Dispenser
+# --------------------------------------
+dp.WrD -> dproduct.Ej
+dp.D[0-3] -> dproduct.PID[0-3]
+dp.finish -> dproduct.Fn
+
+# --------------------------------------
+# Manut
+# --------------------------------------
+m.out           ->  usbport.I6
+
+# --------------------------------------
+# Coin Acceptor
+# --------------------------------------
+coin.coin       ->  usbport.I5
+coin.accept     ->  usbport.O4
+coin.collect    ->  usbport.O5
+coin.eject      ->  usbport.O6
