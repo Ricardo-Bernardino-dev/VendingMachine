@@ -15,6 +15,9 @@ object TUI {
         KBD.init()
     }
 
+    var isSecondDigit = false
+    var firstPressedKey:Char? = null
+
     /**
     Função que determina o modo de escolha através de setas (2 |\ cima, 8 \| baixo), selecionado pelo * e confirma com #.
      */
@@ -70,7 +73,7 @@ object TUI {
             if(key=='*'||key=='#') return key.toString()
             pressed = true
             value += key
-            key = KBD.waitKey(1000)
+            key = KBD.waitKey(500)
         }
         if(key=='*'||key=='#') return value
         if (key == KBD.NONE && pressed) return value
@@ -80,6 +83,14 @@ object TUI {
                 return value
             } else return null
         }
+    }
+
+    fun pressedQuickKeyManual(timeout:Long): Char? {
+        val key: Char = KBD.waitKey(timeout)
+        if (key != KBD.NONE) {
+            return key
+        }
+        return null
     }
 
     fun writeKey(numerodedgitos: Int, keyArray: Array<Char>) {

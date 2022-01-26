@@ -1,13 +1,16 @@
 package main
 
 import java.io.File
+import java.io.FileWriter
 
 fun main() {
 }
 
 object FileAccess {
 
-    fun makeProductList(): List<String?> {
+    var productList: MutableList<String?> = makeProductList()
+
+    fun makeProductList(): MutableList<String?> {
         val list = mutableListOf<String?>(
             null,
             null,
@@ -60,9 +63,20 @@ object FileAccess {
         }
     }
 
-    fun removeProduct(id: Int) {
-
+    fun removeProduct(id: Int){
+        val prod = productList[id]!!.split(';').toMutableList()
+        prod[2] = "${prod[2].toInt()-1}"
+        productList[id] = prod.joinToString(";")
+        updateProducts()
     }
 
-    //fun getProducts():List<String>
+    fun updateProducts(){
+        val prodFile = File("main/PRODUCTS")
+        prodFile.bufferedWriter().use {
+                out ->
+            for (i in 0 .. productList.size-1){
+                if(productList[i] != null) out.write(productList[i]+System.lineSeparator())
+            }
+        }
+    }
 }

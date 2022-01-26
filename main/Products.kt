@@ -43,14 +43,13 @@ object Products {
     }
 
     fun buildProducts() {
-        val list = FileAccess.makeProductList()
+        val list = FileAccess.productList
         for (i in 0..list.size - 1) {
             if (list[i] != null) {
                 val word = list[i]!!.split(';')
                 products[i] = Product(i, word[1], word[2].toInt(), word[3].toInt())
             }
         }
-
     }
 
 

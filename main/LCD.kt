@@ -33,7 +33,7 @@ object LCD { // Escreve no LCD usando a interface a 4 bits.
         HAL.setBits(enableMask)
         HAL.writeBits(dataMask, data)
         HAL.clrBits(enableMask)
-        Time.sleep(10)
+        Time.sleep(5)
     }
 
     private fun writeNibbleSerial(rs: Boolean, data: Int) {

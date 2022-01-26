@@ -10,19 +10,37 @@ fun main() {
 }
 
 class APP {
-
-    //Manuntencao mostra todos
-
-    //true -> manual | false -> arrow
+    /**
+     * Mode 0 - Manual
+     * Mode 1 - Arrow
+     */
     var mode = 0
+
+    /**
+     * Desired timeout for all application processes
+     */
+    val timeout: Long = 1000
+
+    /**
+     * First {Product} of the list of {Products}, obtained after building the list
+     */
     var firstProd: Products.Product? = null
+
+    /**
+     * Last {Product} visualized by the user
+     */
     var currentProd: Products.Product? = null
 
+
+    /**
+     * Get the first Product found in the list of products
+     */
     private fun getFirstProduct(): Products.Product? {
         var notFinished = true
         var i = 0
         var firstItem: Products.Product? = null
         while (notFinished) {
+            if(i==Products.products.size) emptyMachineStock()
             if (Products.products[i] != null) {
                 firstItem = Products.products[i]!!
                 notFinished = false
@@ -32,6 +50,18 @@ class APP {
         return firstItem
     }
 
+    private fun emptyMachineStock() {
+        LCD.clear()
+        LCD.cursor(0,0)
+        LCD.writeS(" Empty machine  ")
+        LCD.cursor(1,0)
+        LCD.writeS("     Stock     ")
+    }
+
+
+    /**
+     * Get the first Product found in the list of products
+     */
     private fun getLastProduct(): Products.Product? {
         var notFinished = true
         var i = Products.products.size-1
@@ -46,13 +76,9 @@ class APP {
         return lastItem
     }
 
-    var numOfDigits = 1
-    val timeout: Long = 1000
-    var currentKey: Char? = null
-
     /**
-     * Ecrã principal da aplicação, que atualiza constatemente o tempo
-     * (ou a data caso passe da meia-noite)
+     * Home screen of the application, updates time constantly and
+     * date if the time is passed due midnight
      */
     fun home() {
         LCD.clear()
@@ -62,7 +88,7 @@ class APP {
         val currentDateTime = LocalDateTime.now()
         var date = currentDateTime.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT))
         var time = currentDateTime.format(DateTimeFormatter.ofPattern("HH:mm"))
-        LCD.writeS(date + " ")
+        LCD.writeS(date + "   ")
         LCD.writeS(time)
         LCD.cursor(2, 16)
         var datechanges: Boolean
@@ -71,7 +97,7 @@ class APP {
         do {
             changed = timechanges(time)
             if (changed != null) {
-                LCD.cursor(1, 9)
+                LCD.cursor(1, 11)
                 LCD.writeS(changed)
                 time = changed
                 datechanges = (time == "00:01")
@@ -84,13 +110,45 @@ class APP {
             }
             key = KBD.getKey()
             if (HAL.isBit(0x40)) MaintenanceMode()
-        } while (key != '#')
-        if (mode == 0) saleManual()
-        else saleArrow()
+        } while (key != '#' && key != '*')
+        if(key == '#') {
+            if (mode == 0) sellManual()
+            else SellArrow()
+        }
+        if(key=='*') cycleProductsDisplay()
     }
 
+    /**
+     * Feature that cycles through all available products (quantity above zero)
+     * Press * to return to Home Screen
+     */
+    private fun cycleProductsDisplay() {
+        LCD.clear()
+        LCD.cursor(0,0)
+        LCD.writeS(" All Available  ")
+        LCD.cursor(1,0)
+        LCD.writeS("   Products:    ")
+        LCD.cursor(3,16)
+        Time.sleep(2500)
+        var idx = 0
+        var key :String? = null
+        while(true){
+            if(idx==Products.products.size) home()
+            LCD.clear()
+            if(Products.products[idx]!=null) {
+                if(Products.products[idx]!!.quantity > 0){
+                    writeProductManual(Products.products[idx]!!)
+                    key = TUI.pressedKeyManual(3000)
+                    if(key=="*") home()
+                }
+            }
+            idx++
+        }
+    }
 
-
+    /**
+     * Returns the current time (if changed), null if not.
+     */
     private fun timechanges(time: String?): String? {
         val currentDateTime = LocalDateTime.now()
         val currenttime = currentDateTime.format(DateTimeFormatter.ofPattern("HH:mm"))
@@ -118,18 +176,21 @@ class APP {
     init {
         init()
         val home = home()
-        val sale = saleManual()
+        val sale = sellManual()
         // if(Sale) SaleMode()
         //else MaintenanceMode()
     }
-    private fun saleArrow() {
+    private fun SellArrow() {
         TUI.clear()
         writeProductArrow(currentProd!!)
         var current = currentProd!!.id
         var counter = 0
         while (counter <= 5) {
             val idx = TUI.arrowInteraction(Products.products,current)
-            if(idx=='*'.code) saleManual()
+            if(idx=='*'.code){
+                mode = 0
+                sellManual()
+            }
                 when(idx){
                     -1 -> {
                         val last = getLastProduct()!!
@@ -148,6 +209,7 @@ class APP {
                     }
 
                     null -> if(currentProd!!.quantity>0) sellProduct(currentProd!!)
+                            else noStock()
 
                     else -> {
                         current = idx
@@ -163,12 +225,10 @@ class APP {
     }
 
 
-
     /**
-     * Mode 0 - Manual
-     * Mode 1 - Arrow
+     * Second Version of the Sell Mode, implements a slower but more accurate key reader display
      */
-    private fun saleManual() {
+    private fun sellManualV2() {
         TUI.clear()
         if (firstProd != null) {
             if(currentProd==firstProd) writeProductManual(firstProd!!)
@@ -180,10 +240,11 @@ class APP {
         var prod = 0
         var counter = 0
         var item = currentProd
-        while (counter <= 5) {
-            val key = TUI.pressedKeyManual(1000)
+        while (counter <= 8) {
+            val key = TUI.pressedKeyManual(300)
             if (key == "*"|| key == "**") {
-                saleArrow()
+                mode = 1
+                SellArrow()
             }
             if (key != null) {
                 if (key != "#"){
@@ -207,11 +268,90 @@ class APP {
                             else productNotAvailable(key.toString())
                         } else productNotAvailable(key.toString())
                     }
-                }else if(currentProd!!.quantity>0) sellProduct(currentProd!!)
+                };
+                if(key== "#"){
+                    if(currentProd!!.quantity>0) sellProduct(currentProd!!)
+                    else noStock()
+                }
                // if (key.toString() == "#" && Products.products[prod]!=null && Products.products[prod]!!.quantity > 0) sellProduct(prod)
             }
             counter++
         }
+        home()
+    }
+
+    /**
+     * The Sell Mode prints the last visualized item (first Product if application restarted),
+     * and constantly waits for a key to be pressed.
+     * If the key pressed is a first digit, it display's the Product immediatly and waits for the second key
+     * if the second key isn't the digit '1', it prints the Product immediatly similarly to what was previously mentioned,
+     * if the second key is the digit '1' it displays the full 2 number digit Product, if it exists in the product list
+     */
+    private fun sellManual() {
+        TUI.clear()
+        if (firstProd != null) {
+            if (currentProd == firstProd) writeProductManual(firstProd!!)
+            else writeProductManual(currentProd!!)
+        } else {
+            LCD.writeS("No Products")
+            home()
+        }
+        var counter = 0
+        var prod: Products.Product?
+        var fullNumber:Int
+        var key: Char?
+        while (counter <= 5) {
+            key = TUI.pressedQuickKeyManual(1000)
+            if(key!=null){
+                if (key == '*') {
+                    mode = 1
+                    SellArrow()
+                }
+                if (key != '#') {
+                    counter = 0
+                    if(TUI.isSecondDigit&&TUI.firstPressedKey=='1'){
+                        fullNumber = ("${TUI.firstPressedKey!!}$key").toInt()
+                        if(fullNumber<Products.products.size) {
+                            prod = Products.products[fullNumber]
+                            if (prod != null){
+                                currentProd = prod
+                                writeProductManual(prod)
+                            }
+                            else{
+                                prod = Products.products[key!!.digitToInt()]
+                                if(prod!=null){
+                                    writeProductManual(prod)
+                                    currentProd=prod
+                                }else productNotAvailable2(key)
+                            }
+                        }
+                        TUI.isSecondDigit=false
+                    }else{
+                        prod = Products.products[key.digitToInt()]
+                        if (prod != null) {
+                            currentProd = prod
+                            writeProductManual(prod)
+                            TUI.firstPressedKey = key
+                            TUI.isSecondDigit = true
+                        }else productNotAvailable2(key)
+                    }
+                }
+                if(key== '#'){
+                    if(currentProd!!.quantity>0) sellProduct(currentProd!!) else noStock()
+                }
+            }
+            counter++
+        };home()
+    }
+
+
+    private fun noStock() {
+        TUI.clear()
+        LCD.cursor(0,0)
+        LCD.writeS("  Out Of Stock  ")
+        LCD.cursor(1,0)
+        LCD.writeS("       :(       ")
+        Time.sleep(2300)
         home()
     }
 
@@ -232,14 +372,20 @@ class APP {
                 home()
             }
             if(CoinAcceptor.counter==price){
-                FileAccess.addCoins(CoinAcceptor.counter)
                 CoinAcceptor.collectCoins()
                 LCD.cursor(1,0)
                 LCD.writeS("Collect Product")
+                LCD.cursor(2,16)
                 SerialEmitter.send(SerialEmitter.Destination.DISPENSER,product.id)
+                LCD.cursor(0,0)
+                LCD.writeS("  Thank You!")
                 LCD.cursor(1,0)
                 LCD.writeS("  See You Soon!    ")
-                Time.sleep(1000)
+                LCD.cursor(2,16)
+                Time.sleep(2000)
+                FileAccess.addCoins(CoinAcceptor.counter)
+                FileAccess.removeProduct(product.id)
+                Products.products[product.id]!!.quantity-=1
                 home()
             }
             if(CoinAcceptor.hasCoin()){
@@ -254,9 +400,11 @@ class APP {
     private fun abort() {
         LCD.clear()
         LCD.writeS("Vending Aborted")
+        LCD.cursor(2,16)
         if(CoinAcceptor.counter>0){
             LCD.cursor(1,0)
             LCD.writeS("  Return ${getCoinValue(CoinAcceptor.counter)}$")
+            LCD.cursor(2,16)
         }
     }
 
@@ -266,7 +414,16 @@ class APP {
         LCD.writeS("Product $key")
         LCD.cursor(1, 1)
         LCD.writeS("Not Available")
+        LCD.cursor(2, 16)
+    }
 
+    private fun productNotAvailable2(key: Char) {
+        LCD.clear()
+        LCD.cursor(0, 3)
+        LCD.writeS("Product $key")
+        LCD.cursor(1, 1)
+        LCD.writeS("Not Available")
+        LCD.cursor(2, 16)
     }
 
     private fun writeProductArrow(prod: Products.Product) {
@@ -277,7 +434,7 @@ class APP {
         val prodId = prod.id
         if (prodId in 10..16) LCD.writeS("$prodId-")
         else LCD.writeS("0${prodId}-")
-        LCD.cursor(1, 5)
+        LCD.cursor(1, 6)
         val prodQuant = prod.quantity
         if (prodQuant in 10..16) LCD.writeS("#${prodQuant}")
         else LCD.writeS("#0$prodQuant")
