@@ -78,10 +78,12 @@ class APP {
      */
     private fun emptyMachineStock() {
         TUI.clear()
-        TUI.cursor(0,0)
+        /*TUI.cursor(0,0)
         TUI.writeS(" Empty machine  ")
         TUI.cursor(1,0)
-        TUI.writeS("     Stock     ")
+        TUI.writeS("     Stock     ")*/
+        writeCentered ("Empty machine",0)
+        writeCentered ("Stock",1)
     }
 
 
@@ -92,15 +94,16 @@ class APP {
     fun home() {
         TUI
         TUI.clear()
-        TUI.cursor(0, 0)
-        TUI.writeS("Vending Machine")
+        //TUI.cursor(0, 0)
+        //TUI.writeS("Vending Machine")
+        writeCentered ("Vending Machine",0)
         TUI.cursor(1, 0)
         val currentDateTime = LocalDateTime.now()
         var date = currentDateTime.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT))
         var time = currentDateTime.format(DateTimeFormatter.ofPattern("HH:mm"))
         TUI.writeS(date + "   ")
         TUI.writeS(time)
-        TUI.cursor(2, 16)
+        hideCursor()
         var datechanges: Boolean
         var changed: String?
         var key: Char
@@ -116,7 +119,7 @@ class APP {
                     TUI.cursor(1, 0)
                     TUI.writeS(date)
                 }
-                TUI.cursor(2, 16)
+                hideCursor()
             }
             key = TUI.getKey()
             if (M.isMaintenance()) MaintenanceMode()
@@ -128,16 +131,39 @@ class APP {
         if(key=='*') cycleProductsDisplay()
     }
 
+    fun writeCentered (text:String, line:Int){
+        val Ntext = text.length
+        var col = 0
+        if (Ntext < 15){
+            col = (16 - Ntext)
+            if(col%2!=0) col+=1
+        }
+        TUI.cursor (line, col/2)
+        TUI.writeS(text)
+    }
+
+    fun hideCursor(){
+        TUI.cursor (3, 16)
+    }
+
+    fun clearLine(line:Int){
+        TUI.cursor (line,0)
+        TUI.writeS("                ")
+    }
+
+
     /**
      * Feature that cycles through all available products (quantity above zero)
      * Press * to return to Home Screen
      */
     private fun cycleProductsDisplay() {
         TUI.clear()
-        TUI.cursor(0,0)
-        TUI.writeS(" All Available  ")
-        TUI.cursor(1,0)
-        TUI.writeS("   Products:    ")
+        writeCentered("All Available", 0)
+        writeCentered("Products:", 1)
+        //TUI.cursor(0,0)
+        //TUI.writeS(" All Available  ")
+        //TUI.cursor(1,0)
+        //TUI.writeS("   Products:    ")
         TUI.cursor(3,16)
         Time.sleep(2500)
         var idx = 0
@@ -386,10 +412,12 @@ class APP {
 
     private fun noStock() {
         TUI.clear()
-        TUI.cursor(0,0)
+        /*TUI.cursor(0,0)
         TUI.writeS("  Out Of Stock  ")
         TUI.cursor(1,0)
-        TUI.writeS("       :(       ")
+        TUI.writeS("       :(       ")*/
+        writeCentered ("Out Of Stock", 0)
+        writeCentered (":(", 1)
         Time.sleep(2300)
     }
 
@@ -402,8 +430,11 @@ class APP {
         println("Sell Product $product")
         val price = product.price
         var priceleft = price
-        TUI.cursor(1, 0)
-        TUI.writeS("      ${getCoinValue(price)}$      ")
+        //TUI.cursor(1, 0)
+        //TUI.writeS("      ${getCoinValue(price)}$      ")
+        clearLine(1)
+        writeCentered ("${getCoinValue(price)}$",1)
+        hideCursor()
         var key: String? = null
         CoinAcceptor.init()
         while (true) {
@@ -415,15 +446,19 @@ class APP {
             }
             if(CoinAcceptor.counter==price){
                 CoinAcceptor.collectCoins()
-                TUI.cursor(1,0)
-                TUI.writeS("Collect Product")
-                TUI.cursor(2,16)
+                //TUI.cursor(1,0)
+                //TUI.writeS("Collect Product")
+                writeCentered ("Collect Product", 1)
+                hideCursor()
                 Dispenser.dispense(product.id)
-                TUI.cursor(0,0)
+                /*TUI.cursor(0,0)
                 TUI.writeS("  Thank You!")
                 TUI.cursor(1,0)
-                TUI.writeS("  See You Soon!    ")
-                TUI.cursor(2,16)
+                TUI.writeS("  See You Soon!    ")*/
+                TUI.clear()
+                writeCentered ("Thank You!", 0)
+                writeCentered ("See You Soon!",1)
+                hideCursor()
                 Time.sleep(2000)
                 CoinDeposit.addCoins(CoinAcceptor.counter)
                 Products.removeProduct(product.id)
@@ -432,8 +467,10 @@ class APP {
             if(CoinAcceptor.hasCoin()){
                 CoinAcceptor.acceptCoin()
                 priceleft-=5
-                TUI.cursor(1, 0)
-                TUI.writeS("      ${getCoinValue(priceleft)}$      ")
+                //TUI.cursor(1, 0)
+                //TUI.writeS("      ${getCoinValue(priceleft)}$      ")
+                writeCentered("${getCoinValue(priceleft)}$", 1)
+                hideCursor()
                 while(CoinAcceptor.hasCoin()){
                     if(key=="#"){
                         abort()
@@ -451,11 +488,12 @@ class APP {
     private fun abort() {
         TUI.clear()
         TUI.writeS("Vending Aborted")
-        TUI.cursor(2,16)
+        hideCursor()
         if(CoinAcceptor.counter>0){
-            TUI.cursor(1,0)
-            TUI.writeS("  Return ${getCoinValue(CoinAcceptor.counter)}$")
-            TUI.cursor(2,16)
+            //TUI.cursor(1,0)
+            //TUI.writeS("  Return ${getCoinValue(CoinAcceptor.counter)}$")
+            writeCentered ("Return ${getCoinValue(CoinAcceptor.counter)}$",1)
+            hideCursor()
         }
     }
 
@@ -466,11 +504,13 @@ class APP {
      */
     private fun productNotAvailableS(key: String) {
         TUI.clear()
-        TUI.cursor(0, 3)
+        /*TUI.cursor(0, 3)
         TUI.writeS("Product $key")
         TUI.cursor(1, 1)
-        TUI.writeS("Not Available")
-        TUI.cursor(2, 16)
+        TUI.writeS("Not Available")*/
+        writeCentered ("Product $key", 0)
+        writeCentered ("Not Available",1)
+        hideCursor()
     }
 
     /**
@@ -480,11 +520,13 @@ class APP {
      */
     private fun productNotAvailableC(key: Char) {
         TUI.clear()
-        TUI.cursor(0, 3)
+        /*TUI.cursor(0, 3)
         TUI.writeS("Product $key")
         TUI.cursor(1, 1)
-        TUI.writeS("Not Available")
-        TUI.cursor(2, 16)
+        TUI.writeS("Not Available")*/
+        writeCentered ("Product $key", 0)
+        writeCentered ("Not Available",1)
+        hideCursor()
     }
 
     /**
@@ -492,8 +534,9 @@ class APP {
      */
     private fun writeProductArrow(prod: Products.Product) {
         TUI.clear()
-        TUI.cursor(0, 5)
-        TUI.writeS(prod.name)
+        //TUI.cursor(0, 5)
+        //TUI.writeS(prod.name)
+        writeCentered(prod.name,0)
         TUI.cursor(1, 0)
         val prodId = prod.id
         if (prodId in 10..16) TUI.writeS("$prodId*")
@@ -510,8 +553,9 @@ class APP {
      */
     private fun writeProductManual(prod: Products.Product) {
         TUI.clear()
-        TUI.cursor(0, 5)
-        TUI.writeS(prod.name)
+        writeCentered(prod.name, 0)
+        //TUI.cursor(0, 5)
+        //TUI.writeS(prod.name)
         TUI.cursor(1, 0)
         val prodId = prod.id
         if (prodId in 10..16) TUI.writeS(prodId.toString())
@@ -542,28 +586,29 @@ class APP {
 
     private fun MaintenanceMode() {
         TUI.clear()
-        TUI.cursor(0, 0)
-        TUI.writeS("Maintenance Mode")
+        //TUI.cursor(0, 0)
+        //TUI.writeS("Maintenance Mode")
+        writeCentered("Maintenance Mode",0)
         var key: Char
         do {
             TUI.cursor(1, 0)
             TUI.writeS("1-Dispense test")
-            TUI.cursor(2, 16)
+            hideCursor()
             key = TUI.waitKey(2000)
             if ((key == '1') || (key == '2') || (key == '3') || (key == '4') || !M.isMaintenance()) break
             TUI.cursor(1, 0)
             TUI.writeS("2-Update Prod. ")
-            TUI.cursor(2, 16)
+            hideCursor()
             key = TUI.waitKey(2000)
             if ((key == '1') || (key == '2') || (key == '3') || (key == '4') || !M.isMaintenance()) break
             TUI.cursor(1, 0)
             TUI.writeS("3-Remove Prod. ")
-            TUI.cursor(2, 16)
+            hideCursor()
             key = TUI.waitKey(2000)
             if ((key == '1') || (key == '2') || (key == '3') || (key == '4') || !M.isMaintenance()) break
             TUI.cursor(1, 0)
             TUI.writeS("4-Shutdown     ")
-            TUI.cursor(2, 16)
+            hideCursor()
             key = TUI.waitKey(2000)
             if ((key == '1') || (key == '2') || (key == '3') || (key == '4') || !M.isMaintenance()) break
         } while (true)
@@ -592,8 +637,10 @@ class APP {
         }
         val prod = selectProduct()
         if(prod==null) MaintenanceMode()
-        TUI.cursor(1,0)
-        TUI.writeS("  *- to Print   ")
+        //TUI.cursor(1,0)
+        //TUI.writeS("  *- to Print   ")
+        clearLine(1)
+        writeCentered ("*- to Print",1)
         var key: Char? = null
         do{
             key = TUI.pressedQuickKeyManual(1000)
@@ -602,8 +649,10 @@ class APP {
                 MaintenanceMode()
             }
         }while(key!='*')
-        TUI.cursor(1,0)
-        TUI.writeS("Collect Product")
+        //TUI.cursor(1,0)
+        //TUI.writeS("Collect Product")
+        clearLine(1)
+        writeCentered("Collect Product",1)
         TUI.cursor(2,16)
         Dispenser.dispense(prod!!.id)
         MaintenanceMode()
@@ -627,8 +676,9 @@ class APP {
         val prod = selectProduct()
         var ifPressed = false
         if(prod==null) MaintenanceMode()
+        clearLine(1)
         TUI.cursor(1,0)
-        TUI.writeS("Qty:??          ")
+        TUI.writeS("Qty:??")
         TUI.cursor(1,4)
         var counter = 0
         do{
@@ -637,8 +687,10 @@ class APP {
                 TUI.writeS("Update "+prod!!.name)
                 TUI.cursor(0,13)
                 TUI.writeS("="+firstKey+secondKey)
-                TUI.cursor(1,0)
-                TUI.writeS("5-Yes  other-No ")
+                //TUI.cursor(1,0)
+                //TUI.writeS("5-Yes  other-No")
+                clearLine(1)
+                writeCentered ("5-Yes  other-No",1)
                 TUI.cursor(2,16)
                 counter = 0
                 while(counter<=10) {
@@ -701,11 +753,13 @@ class APP {
         if(prod==null) MaintenanceMode()
         var counter = 0
         var key:Char?
+        TUI.clear()
         do{
             TUI.cursor(0,0)
             TUI.writeS("Remove "+prod!!.name)
-            TUI.cursor(1,0)
-            TUI.writeS("5-Yes  other-No ")
+            //TUI.cursor(1,0)
+            //TUI.writeS("5-Yes  other-No ")
+            writeCentered ("5-Yes  other-No",1)
             TUI.cursor(2,16)
 
             key = TUI.waitKey(1000)
@@ -723,10 +777,13 @@ class APP {
      * Procedure for Application Shutdown.
      */
     private fun shutdown(){
-        TUI.cursor(0,0)
+        /*TUI.cursor(0,0)
         TUI.writeS("    Shutdown    ")
         TUI.cursor(1,0)
-        TUI.writeS("5-Yes   other-No")
+        TUI.writeS("5-Yes   other-No")*/
+        TUI.clear()
+        writeCentered("Shutdown",0)
+        writeCentered("5-Yes   other-No",1)
         TUI.cursor(2,16)
         var counter = 0;
         var key:Char?
@@ -734,8 +791,10 @@ class APP {
             key = TUI.waitKey(1000)
             if(key=='5'){
                 TUI.clear()
-                TUI.cursor(0,0)
-                TUI.writeS("  See you soon  ")
+                //TUI.cursor(0,0)
+                //TUI.writeS("  See you soon  ")
+                writeCentered("See You Soon",0)
+                hideCursor()
                 Time.sleep(2000)
                 TUI.clear()
                 exitProcess(1)
