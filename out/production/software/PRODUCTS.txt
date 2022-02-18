@@ -1,8 +1,0 @@
-0;Chips;0;45
-1;M&Ms;5;20
-2;Snickers;5;25
-4;Water;7;10
-5;Coca-Cola;12;15
-8;Chicelete;4;10
-11;Bounty;2;35
-15;Coffee;7;5
