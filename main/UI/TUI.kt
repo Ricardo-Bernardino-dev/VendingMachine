@@ -132,6 +132,26 @@ object TUI {
         LCD.writeC(c)
     }
 
+    fun writeCentered (text:String, line:Int){
+        val Ntext = text.length
+        var col = 0
+        if (Ntext < 15){
+            col = (16 - Ntext)
+            if(col%2!=0) col+=1
+        }
+        TUI.cursor (line, col/2)
+        TUI.writeS(text)
+    }
+
+    fun hideCursor(){
+        TUI.cursor (3, 16)
+    }
+
+    fun clearLine(line:Int){
+        TUI.cursor (line,0)
+        TUI.writeS("                ")
+    }
+
 
     /**
      * Metodo generico que escreve a lista passada como argumento
