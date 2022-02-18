@@ -4,8 +4,9 @@ import isel.leic.utils.Time
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
+import kotlin.system.exitProcess
 
-fun main() {
+fun main(){
     var app: APP = APP()
 }
 
@@ -50,15 +51,6 @@ class APP {
         return firstItem
     }
 
-    private fun emptyMachineStock() {
-        LCD.clear()
-        LCD.cursor(0,0)
-        LCD.writeS(" Empty machine  ")
-        LCD.cursor(1,0)
-        LCD.writeS("     Stock     ")
-    }
-
-
     /**
      * Get the first Product found in the list of products
      */
@@ -77,39 +69,52 @@ class APP {
     }
 
     /**
+     * Function that displays the text shown in case of Machine stock is empty
+     */
+    private fun emptyMachineStock() {
+        TUI.clear()
+        TUI.cursor(0,0)
+        TUI.writeS(" Empty machine  ")
+        TUI.cursor(1,0)
+        TUI.writeS("     Stock     ")
+    }
+
+
+    /**
      * Home screen of the application, updates time constantly and
      * date if the time is passed due midnight
      */
     fun home() {
-        LCD.clear()
-        LCD.cursor(0, 0)
-        LCD.writeS("Vending Machine")
-        LCD.cursor(1, 0)
+        TUI
+        TUI.clear()
+        TUI.cursor(0, 0)
+        TUI.writeS("Vending Machine")
+        TUI.cursor(1, 0)
         val currentDateTime = LocalDateTime.now()
         var date = currentDateTime.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT))
         var time = currentDateTime.format(DateTimeFormatter.ofPattern("HH:mm"))
-        LCD.writeS(date + "   ")
-        LCD.writeS(time)
-        LCD.cursor(2, 16)
+        TUI.writeS(date + "   ")
+        TUI.writeS(time)
+        TUI.cursor(2, 16)
         var datechanges: Boolean
         var changed: String?
         var key: Char
         do {
             changed = timechanges(time)
             if (changed != null) {
-                LCD.cursor(1, 11)
-                LCD.writeS(changed)
+                TUI.cursor(1, 11)
+                TUI.writeS(changed)
                 time = changed
                 datechanges = (time == "00:01")
                 if (datechanges) {
                     date = currentDateTime.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT))
-                    LCD.cursor(1, 0)
-                    LCD.writeS(date)
+                    TUI.cursor(1, 0)
+                    TUI.writeS(date)
                 }
-                LCD.cursor(2, 16)
+                TUI.cursor(2, 16)
             }
             key = KBD.getKey()
-            if (HAL.isBit(0x40)) MaintenanceMode()
+            if (M.isMaintenance()) MaintenanceMode()
         } while (key != '#' && key != '*')
         if(key == '#') {
             if (mode == 0) sellManual()
@@ -123,18 +128,18 @@ class APP {
      * Press * to return to Home Screen
      */
     private fun cycleProductsDisplay() {
-        LCD.clear()
-        LCD.cursor(0,0)
-        LCD.writeS(" All Available  ")
-        LCD.cursor(1,0)
-        LCD.writeS("   Products:    ")
-        LCD.cursor(3,16)
+        TUI.clear()
+        TUI.cursor(0,0)
+        TUI.writeS(" All Available  ")
+        TUI.cursor(1,0)
+        TUI.writeS("   Products:    ")
+        TUI.cursor(3,16)
         Time.sleep(2500)
         var idx = 0
         var key :String? = null
         while(true){
             if(idx==Products.products.size) home()
-            LCD.clear()
+            TUI.clear()
             if(Products.products[idx]!=null) {
                 if(Products.products[idx]!!.quantity > 0){
                     writeProductManual(Products.products[idx]!!)
@@ -157,12 +162,12 @@ class APP {
     }
 
     /**
-     * Função de inicialização dos componentes base, e da lista de produtos através da leitura do ficheiro PRODUCTS.txt
+     * Initializes all basic components and the product list from the PRODUCTS.txt file
      */
     fun init() {
         HAL.init()
         SerialEmitter.init()
-        LCD.init()
+        TUI.init()
         Products.buildProducts()
         firstProd = getFirstProduct()
         currentProd = firstProd
@@ -170,8 +175,8 @@ class APP {
 
 
     /**
-     * Construtor primário da Aplicação,
-     * inicia os componentes (init) e redireciona para o ecrã principal (home)
+     * Primary Initializer of the Application
+     * Initializes all basic components (init function) and enters Home Screen
      */
     init {
         init()
@@ -180,6 +185,10 @@ class APP {
         // if(Sale) SaleMode()
         //else MaintenanceMode()
     }
+
+    /**
+     * Sell Mode through Arrow Interaction (8 Down or 2 Up)
+     */
     private fun SellArrow() {
         TUI.clear()
         writeProductArrow(currentProd!!)
@@ -191,34 +200,34 @@ class APP {
                 mode = 0
                 sellManual()
             }
-                when(idx){
-                    -1 -> {
-                        val last = getLastProduct()!!
-                        writeProductArrow(last)
-                        current = last.id
-                        counter = 0
-                        currentProd = last
-                    }
-
-                    Products.products.size ->{
-                        val first = getFirstProduct()!!
-                        writeProductArrow(first)
-                        current = first.id
-                        counter = 0
-                        currentProd = first
-                    }
-
-                    null -> if(currentProd!!.quantity>0) sellProduct(currentProd!!)
-                            else noStock()
-
-                    else -> {
-                        current = idx
-                        counter = 0
-                        val prod = Products.products[idx]
-                        writeProductArrow(prod!!)
-                        currentProd = prod
-                    }
+            when(idx){
+                -1 -> {
+                    val last = getLastProduct()!!
+                    writeProductArrow(last)
+                    current = last.id
+                    counter = 0
+                    currentProd = last
                 }
+
+                Products.products.size ->{
+                    val first = getFirstProduct()!!
+                    writeProductArrow(first)
+                    current = first.id
+                    counter = 0
+                    currentProd = first
+                }
+
+                null -> if(currentProd!!.quantity>0) sellProduct(currentProd!!)
+                        else noStock()
+
+                else -> {
+                    current = idx
+                    counter = 0
+                    val prod = Products.products[idx]
+                    writeProductArrow(prod!!)
+                    currentProd = prod
+                }
+            }
         counter++
         }
         home()
@@ -234,7 +243,7 @@ class APP {
             if(currentProd==firstProd) writeProductManual(firstProd!!)
             else writeProductManual(currentProd!!)
         } else {
-            LCD.writeS("No Products")
+            TUI.writeS("No Products")
             home()
         }
         var prod = 0
@@ -256,7 +265,7 @@ class APP {
                             currentProd = item
                             writeProductManual(item)
                         }
-                        else productNotAvailable(key.toString())
+                        else productNotAvailableS(key.toString())
                     } else {
                         println(key.toInt())
                         if (key.toInt() in 10..15) {
@@ -265,8 +274,8 @@ class APP {
                                 currentProd = item
                                 writeProductManual(item)
                             }
-                            else productNotAvailable(key.toString())
-                        } else productNotAvailable(key.toString())
+                            else productNotAvailableS(key.toString())
+                        } else productNotAvailableS(key.toString())
                     }
                 };
                 if(key== "#"){
@@ -293,13 +302,27 @@ class APP {
             if (currentProd == firstProd) writeProductManual(firstProd!!)
             else writeProductManual(currentProd!!)
         } else {
-            LCD.writeS("No Products")
+            TUI.writeS("No Products")
             home()
         }
+        val prod = selectProduct()
+        if(prod!=null){
+            if(prod.quantity>0) sellProduct(currentProd!!) else noStock()
+        }
+        home()
+    }
+
+    /**
+     * Enters the Selection Screen to select a certain product, if the the user takes more than 5 seconds to press any key
+     * timeout is given and the Application returns to the Home Screen.
+     */
+    private fun selectProduct(): Products.Product? { //Passar timeout como parametro
         var counter = 0
         var prod: Products.Product?
         var fullNumber:Int
         var key: Char?
+        currentProd = firstProd
+        var prevKey: String = currentProd!!.id.toString()
         while (counter <= 5) {
             key = TUI.pressedQuickKeyManual(1000)
             if(key!=null){
@@ -310,58 +333,74 @@ class APP {
                 if (key != '#') {
                     counter = 0
                     if(TUI.isSecondDigit&&TUI.firstPressedKey=='1'){
+                        prevKey+= key.toString()
                         fullNumber = ("${TUI.firstPressedKey!!}$key").toInt()
                         if(fullNumber<Products.products.size) {
                             prod = Products.products[fullNumber]
                             if (prod != null){
+                                TUI.isSecondDigit = false
                                 currentProd = prod
                                 writeProductManual(prod)
                             }
                             else{
-                                prod = Products.products[key!!.digitToInt()]
+                                prod = Products.products[key.digitToInt()]
                                 if(prod!=null){
+                                    TUI.isSecondDigit = false
                                     writeProductManual(prod)
                                     currentProd=prod
-                                }else productNotAvailable2(key)
+                                }else productNotAvailableC(key)
                             }
                         }
-                        TUI.isSecondDigit=false
+                        else {
+                            TUI.isSecondDigit = false
+                            prevKey = key.toString()
+                            prod = Products.products[key.digitToInt()]
+                            if(prod!=null) writeProductManual(prod) else productNotAvailableC(key)
+                        }
                     }else{
                         prod = Products.products[key.digitToInt()]
+                        prevKey = key.toString()
                         if (prod != null) {
                             currentProd = prod
                             writeProductManual(prod)
                             TUI.firstPressedKey = key
                             TUI.isSecondDigit = true
-                        }else productNotAvailable2(key)
+                        }else productNotAvailableC(key)
                     }
                 }
-                if(key== '#'){
-                    if(currentProd!!.quantity>0) sellProduct(currentProd!!) else noStock()
+                if(key== '#'&& (currentProd!!.id.toString() == prevKey)){
+                    return currentProd!!
                 }
             }
             counter++
-        };home()
+        };return null
     }
 
+    /**
+     * If the Machine presents no products at all (no stock, no data in PRODUCTS.txt),
+     * an "Out Of Stock" message is displayed
+     */
 
     private fun noStock() {
         TUI.clear()
-        LCD.cursor(0,0)
-        LCD.writeS("  Out Of Stock  ")
-        LCD.cursor(1,0)
-        LCD.writeS("       :(       ")
+        TUI.cursor(0,0)
+        TUI.writeS("  Out Of Stock  ")
+        TUI.cursor(1,0)
+        TUI.writeS("       :(       ")
         Time.sleep(2300)
-        home()
     }
 
-
+    /**
+     * Function that sells a product passed as function parameter. Interacts directly with the FileAccess class functions that check
+     * if a coin was inserted, and therefore collected. If the coin value inserted matches the item price, the function proceeds to dispense
+     * said product and returns to Home Screen after a farewell message.
+     */
     private fun sellProduct(product: Products.Product) {
         println("Sell Product $product")
         val price = product.price
         var priceleft = price
-        LCD.cursor(1, 0)
-        LCD.writeS("      ${getCoinValue(price)}$      ")
+        TUI.cursor(1, 0)
+        TUI.writeS("      ${getCoinValue(price)}$      ")
         var key: String? = null
         CoinAcceptor.init()
         while (true) {
@@ -373,15 +412,15 @@ class APP {
             }
             if(CoinAcceptor.counter==price){
                 CoinAcceptor.collectCoins()
-                LCD.cursor(1,0)
-                LCD.writeS("Collect Product")
-                LCD.cursor(2,16)
+                TUI.cursor(1,0)
+                TUI.writeS("Collect Product")
+                TUI.cursor(2,16)
                 SerialEmitter.send(SerialEmitter.Destination.DISPENSER,product.id)
-                LCD.cursor(0,0)
-                LCD.writeS("  Thank You!")
-                LCD.cursor(1,0)
-                LCD.writeS("  See You Soon!    ")
-                LCD.cursor(2,16)
+                TUI.cursor(0,0)
+                TUI.writeS("  Thank You!")
+                TUI.cursor(1,0)
+                TUI.writeS("  See You Soon!    ")
+                TUI.cursor(2,16)
                 Time.sleep(2000)
                 FileAccess.addCoins(CoinAcceptor.counter)
                 FileAccess.removeProduct(product.id)
@@ -391,147 +430,318 @@ class APP {
             if(CoinAcceptor.hasCoin()){
                 CoinAcceptor.acceptCoin()
                 priceleft-=5
-                LCD.cursor(1, 0)
-                LCD.writeS("      ${getCoinValue(priceleft)}$      ")
+                TUI.cursor(1, 0)
+                TUI.writeS("      ${getCoinValue(priceleft)}$      ")
+                while(CoinAcceptor.hasCoin()){
+                    if(key=="#"){
+                        abort()
+                        CoinAcceptor.ejectCoins()
+                        home()
+                    }
+                }
             }
         }
     }
 
+    /**
+     * Aborts the current Sell Mode
+     */
     private fun abort() {
-        LCD.clear()
-        LCD.writeS("Vending Aborted")
-        LCD.cursor(2,16)
+        TUI.clear()
+        TUI.writeS("Vending Aborted")
+        TUI.cursor(2,16)
         if(CoinAcceptor.counter>0){
-            LCD.cursor(1,0)
-            LCD.writeS("  Return ${getCoinValue(CoinAcceptor.counter)}$")
-            LCD.cursor(2,16)
+            TUI.cursor(1,0)
+            TUI.writeS("  Return ${getCoinValue(CoinAcceptor.counter)}$")
+            TUI.cursor(2,16)
         }
     }
 
-    private fun productNotAvailable(key: String) {
-        LCD.clear()
-        LCD.cursor(0, 3)
-        LCD.writeS("Product $key")
-        LCD.cursor(1, 1)
-        LCD.writeS("Not Available")
-        LCD.cursor(2, 16)
+    /**
+     * In-case the product selected has no information (no data in the PRODUCTS.txt),
+     * a "Product Not Available" message is displayed
+     * @param key - a String number of 2 digits
+     */
+    private fun productNotAvailableS(key: String) {
+        TUI.clear()
+        TUI.cursor(0, 3)
+        TUI.writeS("Product $key")
+        TUI.cursor(1, 1)
+        TUI.writeS("Not Available")
+        TUI.cursor(2, 16)
     }
 
-    private fun productNotAvailable2(key: Char) {
-        LCD.clear()
-        LCD.cursor(0, 3)
-        LCD.writeS("Product $key")
-        LCD.cursor(1, 1)
-        LCD.writeS("Not Available")
-        LCD.cursor(2, 16)
+    /**
+     * In-case the product selected has no information (no data in the PRODUCTS.txt),
+     * a "Product Not Available" message is displayed
+     * @param key - a char number of 1 digit
+     */
+    private fun productNotAvailableC(key: Char) {
+        TUI.clear()
+        TUI.cursor(0, 3)
+        TUI.writeS("Product $key")
+        TUI.cursor(1, 1)
+        TUI.writeS("Not Available")
+        TUI.cursor(2, 16)
     }
 
+    /**
+     * Writes Product in Arrow Sell Mode
+     */
     private fun writeProductArrow(prod: Products.Product) {
-        LCD.clear()
-        LCD.cursor(0, 5)
-        LCD.writeS(prod.name)
-        LCD.cursor(1, 0)
+        TUI.clear()
+        TUI.cursor(0, 5)
+        TUI.writeS(prod.name)
+        TUI.cursor(1, 0)
         val prodId = prod.id
-        if (prodId in 10..16) LCD.writeS("$prodId-")
-        else LCD.writeS("0${prodId}-")
-        LCD.cursor(1, 6)
+        if (prodId in 10..16) TUI.writeS("$prodId*")
+        else TUI.writeS("0${prodId}*")
+        TUI.cursor(1, 6)
         val prodQuant = prod.quantity
-        if (prodQuant in 10..16) LCD.writeS("#${prodQuant}")
-        else LCD.writeS("#0$prodQuant")
-        LCD.cursor(1, 12)
-        LCD.writeS("${getCoinValue(prod.price)}$")
+        if (prodQuant in 10..16) TUI.writeS("#${prodQuant}")
+        else TUI.writeS("#0$prodQuant")
+        TUI.cursor(1, 12)
+        TUI.writeS("${getCoinValue(prod.price)}$")
     }
-
+    /**
+     * Writes Product in Manual Sell Mode
+     */
     private fun writeProductManual(prod: Products.Product) {
-        LCD.clear()
-        LCD.cursor(0, 5)
-        LCD.writeS(prod.name)
-        LCD.cursor(1, 0)
+        TUI.clear()
+        TUI.cursor(0, 5)
+        TUI.writeS(prod.name)
+        TUI.cursor(1, 0)
         val prodId = prod.id
-        if (prodId in 10..16) LCD.writeS(prodId.toString())
-        else LCD.writeS("0$prodId")
-        LCD.cursor(1, 6)
+        if (prodId in 10..16) TUI.writeS(prodId.toString())
+        else TUI.writeS("0$prodId")
+        TUI.cursor(1, 6)
         val prodQuant = prod.quantity
-        if (prodQuant in 10..16) LCD.writeS("#${prodQuant}")
-        else LCD.writeS("#0$prodQuant")
-        LCD.cursor(1, 12)
-        LCD.writeS("${getCoinValue(prod.price)}$")
+        if (prodQuant in 10..16) TUI.writeS("#${prodQuant}")
+        else TUI.writeS("#0$prodQuant")
+        TUI.cursor(1, 12)
+        TUI.writeS("${getCoinValue(prod.price)}$")
     }
 
+    /**
+     * Gets the respective Double value of the Coin, that represents a real value in a certain currency.
+     */
     private fun getCoinValue(value: Int): Double {
         return value.toDouble() / 10
     }
 
+    /**
+     *
+     *  -------------------------------------   Modo de Manutenção  -------------------------------------------
+     */
+
+    /**
+     * Primary function of Maintenance Mode that is called when the M button is pressed and remains pressed.
+     */
+
     private fun MaintenanceMode() {
-        LCD.clear()
-        LCD.cursor(0, 0)
-        LCD.writeS("Maintenance Mode")
+        TUI.clear()
+        TUI.cursor(0, 0)
+        TUI.writeS("Maintenance Mode")
         var key: Char
         do {
-            LCD.cursor(1, 0)
-            LCD.writeS("1-Dispense test")
-            LCD.cursor(2, 16)
+            TUI.cursor(1, 0)
+            TUI.writeS("1-Dispense test")
+            TUI.cursor(2, 16)
             key = KBD.waitKey(2000)
-            if ((key == '1') || (key == '2') || (key == '3') || (key == '4') || !(HAL.isBit(0x40))) break
-            LCD.cursor(1, 0)
-            LCD.writeS("2-Update Prod. ")
-            LCD.cursor(2, 16)
+            if ((key == '1') || (key == '2') || (key == '3') || (key == '4') || !M.isMaintenance()) break
+            TUI.cursor(1, 0)
+            TUI.writeS("2-Update Prod. ")
+            TUI.cursor(2, 16)
             key = KBD.waitKey(2000)
-            if ((key == '1') || (key == '2') || (key == '3') || (key == '4') || !(HAL.isBit(0x40))) break
-            LCD.cursor(1, 0)
-            LCD.writeS("3-Remove Prod. ")
-            LCD.cursor(2, 16)
+            if ((key == '1') || (key == '2') || (key == '3') || (key == '4') || !M.isMaintenance()) break
+            TUI.cursor(1, 0)
+            TUI.writeS("3-Remove Prod. ")
+            TUI.cursor(2, 16)
             key = KBD.waitKey(2000)
-            if ((key == '1') || (key == '2') || (key == '3') || (key == '4') || !(HAL.isBit(0x40))) break
-            LCD.cursor(1, 0)
-            LCD.writeS("4-Shutdown     ")
-            LCD.cursor(2, 16)
+            if ((key == '1') || (key == '2') || (key == '3') || (key == '4') || !M.isMaintenance()) break
+            TUI.cursor(1, 0)
+            TUI.writeS("4-Shutdown     ")
+            TUI.cursor(2, 16)
             key = KBD.waitKey(2000)
-            if ((key == '1') || (key == '2') || (key == '3') || (key == '4') || !(HAL.isBit(0x40))) break
+            if ((key == '1') || (key == '2') || (key == '3') || (key == '4') || !M.isMaintenance()) break
         } while (true)
-        if (!(HAL.isBit(0x40))) home()
+        if (!M.isMaintenance()) home()
         when (key) {
-            '1' -> print("x == 1")  //Dispense Test
-            '2' -> print("x == 2")  //Update Prod
-            '3' -> print("x == 3") //Remove Prod
-            '4' -> print("x == 4") //Shutdown
+            '1' -> dispenseTest()  //Dispense Test
+            '2' -> updateProduct()  //Update Prod
+            '3' -> removeProduct() //Remove Prod
+            '4' -> shutdown() //Shutdown
 
         }
     }
 
-
-    /*
-    fun getProducts():Array<String>{
-       // TODO
-    }
-    
-    fun mode(manual:Boolean):Int{ 
-        if(manual) currentKey = TUI.manualInteraction(numOfDigits, timeout)
-        else  cycle(TUI.arrowInteraction())
-    }
-
+    /**
+     * Dispense Test that simulates the dispensing of a product.
      */
 
-    private fun cycle(arrowInteraction: Int) {
-
+    private fun dispenseTest(){
+        TUI.clear()
+        if (firstProd != null) {
+            if (currentProd == firstProd) writeProductManual(firstProd!!)
+            else writeProductManual(currentProd!!)
+        } else {
+            TUI.writeS("No Products")
+            home()
+        }
+        val prod = selectProduct()
+        if(prod==null) MaintenanceMode()
+        TUI.cursor(1,0)
+        TUI.writeS("  *- to Print   ")
+        var key: Char? = null
+        do{
+            key = TUI.pressedQuickKeyManual(1000)
+            if(key=='#'){
+                abort()
+                MaintenanceMode()
+            }
+        }while(key!='*')
+        TUI.cursor(1,0)
+        TUI.writeS("Collect Product")
+        TUI.cursor(2,16)
+        SerialEmitter.send(SerialEmitter.Destination.DISPENSER,prod!!.id)
+        MaintenanceMode()
     }
 
+    /**
+     * Product quantity update according to user's input
+     */
+    private fun updateProduct(){
+        TUI.clear()
+        if (firstProd != null) {
+            if (currentProd == firstProd) writeProductManual(firstProd!!)
+            else writeProductManual(currentProd!!)
+        } else {
+            TUI.writeS("No Products")
+            home()
+        }
+        var firstKey: Char? = null
+        var secondKey: Char? = null
+        var key: Char?
+        val prod = selectProduct()
+        var ifPressed = false
+        if(prod==null) MaintenanceMode()
+        TUI.cursor(1,0)
+        TUI.writeS("Qty:??          ")
+        TUI.cursor(1,4)
+        var counter = 0
+        do{
+            if(ifPressed){
+                TUI.cursor(0,0)
+                TUI.writeS("Update "+prod!!.name)
+                TUI.cursor(0,13)
+                TUI.writeS("="+firstKey+secondKey)
+                TUI.cursor(1,0)
+                TUI.writeS("5-Yes  other-No ")
+                TUI.cursor(2,16)
+                counter = 0
+                while(counter<=10) {
+                    key = KBD.waitKey(1000)
+                    if(key=='5'){
+                        val value:Int  = (""+firstKey+secondKey).toInt()
+                        updateProductQuantity(prod.id,value)
+                    }
+                    if(key!=KBD.NONE) MaintenanceMode()
+                    counter++
+                };
+            }
+            else {
+                key = KBD.waitKey(1000)
+                if(key != KBD.NONE) {
+                    if (firstKey == null && key != '*' && key != '#') {
+                        firstKey = key
+                        TUI.writeC(firstKey)
+                    } else {
+                        if (key == '*') {
+                            firstKey = null
+                            TUI.cursor(1, 4)
+                            TUI.writeC('?')
+                            TUI.cursor(1,4)
+                        }
+                        if(key != '#' && key != '*') {
+                            secondKey = key
+                            ifPressed = true
+                        }
+                    }
+                }
+            }
+            counter++
+        }while(counter<=10)
+        MaintenanceMode()
+    }
 
-    //ponteiro idx de TUI.arrowInteraction é dos produtos
-    // Iteração de setas: ir chamando a função TUI.arrowInteraction
-    //Se a tecla for '#' no TUI.arrowInteraction entrar numa função que muda um booleano para false, que acaba o ciclo while (cicle de tecla)
-    // se end() acaba por alteração, chama a função com while de TUI.getKey (modo manual)
-    // se end() acaba por confirmação, chama a função de print da tecla e info
-    //A App dá cycle no array de produtos, consuante o retorno da função TUI.arrowInteraction
+    /**
+     * Product Quantity Update function, aditional function to "updateProduct" function
+     */
+    private fun updateProductQuantity(prodId:Int ,c: Int) {
+        Products.products[prodId]!!.quantity = c
+        FileAccess.updateProduct(prodId,c)
+        MaintenanceMode()
+    }
+
+    /**
+     * Product Removal Function, that removes a certain introduced product from the respective hard-coded List of Products,
+     * and the PRODUCTS.txt file, simulating the full removal of a product from the Machine's available Stock.
+     */
+    private fun removeProduct(){
+        TUI.clear()
+        if (firstProd != null) {
+            if (currentProd == firstProd) writeProductManual(firstProd!!)
+            else writeProductManual(currentProd!!)
+        } else {
+            TUI.writeS("No Products")
+            home()
+        }
+        val prod = selectProduct()
+        if(prod==null) MaintenanceMode()
+        var counter = 0
+        var key:Char?
+        do{
+            TUI.cursor(0,0)
+            TUI.writeS("Remove "+prod!!.name)
+            TUI.cursor(1,0)
+            TUI.writeS("5-Yes  other-No ")
+            TUI.cursor(2,16)
+
+            key = KBD.waitKey(1000)
+            if(key=='5'){
+                Products.products[prod.id]=null
+                FileAccess.deleteProduct(prod.id)
+                currentProd=firstProd
+            }
+            if(key!=KBD.NONE) MaintenanceMode()
+            counter++
+        }while(counter<=10)
+        MaintenanceMode()
+    }
+
+    /**
+     * Procedure for Application Shutdown.
+     */
+    private fun shutdown(){
+        TUI.cursor(0,0)
+        TUI.writeS("    Shutdown    ")
+        TUI.cursor(1,0)
+        TUI.writeS("5-Yes   other-No")
+        TUI.cursor(2,16)
+        var counter = 0;
+        var key:Char?
+        while(counter<=5) {
+            key = KBD.waitKey(1000)
+            if(key=='5'){
+                TUI.clear()
+                TUI.cursor(0,0)
+                TUI.writeS("  See you soon  ")
+                Time.sleep(2000)
+                TUI.clear()
+                exitProcess(1)
+            }
+            if (key!=KBD.NONE) MaintenanceMode()
+            counter++
+        };home()
+    }
 }
-
-
-/*Modo de Venda
- 1- Averiguar o modo de análise de tecla (arrow ou manual) usando a classe TUI
- 2- Atribuir o produto desejado à tecla pressa (array de produtos)
- 3- Display do info do produto no LCD
- */
-
-/* Modo de Manuntenção
- TODO
- */

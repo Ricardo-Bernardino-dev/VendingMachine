@@ -70,6 +70,27 @@ object FileAccess {
         updateProducts()
     }
 
+    /**
+     * Maintenance Mode Update product with a certain quantity
+     */
+    fun updateProduct(id: Int, quant:Int){
+        val prod = productList[id]!!.split(';').toMutableList()
+        prod[2] = "${prod[2].toInt()+quant}"
+        productList[id] = prod.joinToString(";")
+        updateProducts()
+    }
+
+    /**
+     * Deletes a certain product from the PRODUCTS file
+     */
+    fun deleteProduct(id:Int){
+        productList[id]=null
+        updateProducts()
+    }
+
+    /**
+     * File Update
+     */
     fun updateProducts(){
         val prodFile = File("main/PRODUCTS")
         prodFile.bufferedWriter().use {

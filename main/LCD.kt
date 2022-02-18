@@ -7,7 +7,7 @@ fun main() {
     SerialEmitter.init()
     LCD.init()
     //  KBD.init()
-    LCD.writeS("H")
+    LCD.writeS("Hello")
     Time.sleep(3000)
 
 }
@@ -69,9 +69,10 @@ object LCD { // Escreve no LCD usando a interface a 4 bits.
         writeCMD(0x28)
         writeCMD(0x08)
         writeCMD(0x01)
+        Time.sleep(1)
         writeCMD(0x06)
         writeCMD(0x0F)
-        Time.sleep(20)
+        Time.sleep(10)
         INIT_STATE = true
     }
 
@@ -94,7 +95,6 @@ object LCD { // Escreve no LCD usando a interface a 4 bits.
 
     fun clear() {
         writeCMD(0x01)
-        cursor(0, 0)
         Time.sleep(10)
     }
 }

@@ -18,6 +18,7 @@ object CoinAcceptor { // Implementa a interface com o moedeiro.
     }
 
 
+
     // Informa o moedeiro que a moeda foi contabilizada.
     fun acceptCoin() {
         HAL.setBits(0x10)

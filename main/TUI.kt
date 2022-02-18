@@ -105,6 +105,18 @@ object TUI {
         LCD.clear()
     }
 
+    fun cursor(line:Int,column:Int){
+        LCD.cursor(line,column)
+    }
+
+    fun writeS(text: String) {
+        LCD.writeS(text)
+    }
+
+    fun writeC(c:Char){
+        LCD.writeC(c)
+    }
+
 
     /**
      * Metodo generico que escreve a lista passada como argumento

@@ -8,7 +8,7 @@ fun main() {
     SerialEmitter.init()
     SerialEmitter.send(SerialEmitter.Destination.LCD, 0x03)
     Time.sleep(3000)
-    //LCD.writeS("Hello")
+    //LCD.writeS("Hello") 
     //Time.sleep(3000)
 }
 
@@ -61,6 +61,7 @@ object SerialEmitter { // Envia tramas para o módulo Serial Receiver
         HAL.setBits(SCLK_MASK)
         HAL.setBits(SDX_MASK)
         HAL.clrBits(SCLK_MASK)
+        Time.sleep(1)
     }
 
     fun isBusy(): Boolean {
