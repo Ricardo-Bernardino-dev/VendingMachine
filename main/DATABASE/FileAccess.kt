@@ -1,7 +1,6 @@
-package main
+package main.DATABASE
 
 import java.io.File
-import java.io.FileWriter
 
 fun main() {
 }
@@ -10,7 +9,7 @@ object FileAccess {
 
     var productList: MutableList<String?> = makeProductList()
 
-    fun makeProductList(): MutableList<String?> {
+    private fun makeProductList(): MutableList<String?> {
         val list = mutableListOf<String?>(
             null,
             null,
@@ -30,14 +29,14 @@ object FileAccess {
             null
         )
         var i = 0
-        File("main/PRODUCTS").forEachLine {
+        File("main/DATABASE/Products/PRODUCTS").forEachLine {
             val word = it.substringBefore(';')
             list.add(word.toInt(), it)
         };return list
     }
 
-    fun getCoins(): Int {
-        var text = File("main/CoinDeposit.txt").readText()
+    private fun getCoins(): Int {
+        var text = File("main/DATABASE/Coins/CoinDeposit.txt").readText()
         text = text.substringBeforeLast(';')
         return text.toInt()
 
@@ -49,7 +48,7 @@ object FileAccess {
         if (coinsToAdd <= 0) return 0
         val currentCoins = getCoins()
         val coinsToWrite = currentCoins + coinsToAdd
-        val myfile = File("main/CoinDeposit.txt").bufferedWriter().use { out ->
+        val myfile = File("main/DATABASE/Coins/CoinDeposit.txt").bufferedWriter().use { out ->
             out.write("$coinsToWrite;")
         }
         return 1
@@ -91,8 +90,8 @@ object FileAccess {
     /**
      * File Update
      */
-    fun updateProducts(){
-        val prodFile = File("main/PRODUCTS")
+    private fun updateProducts(){
+        val prodFile = File("main/DATABASE/Products/PRODUCTS")
         prodFile.bufferedWriter().use {
                 out ->
             for (i in 0 .. productList.size-1){

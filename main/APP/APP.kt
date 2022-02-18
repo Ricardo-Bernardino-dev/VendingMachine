@@ -1,6 +1,11 @@
-package main
+package main.APP
 
 import isel.leic.utils.Time
+import main.CoinAcceptor
+import main.DATABASE.CoinDeposit
+import main.DATABASE.Products
+import main.UI.Dispenser
+import main.UI.TUI
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -113,7 +118,7 @@ class APP {
                 }
                 TUI.cursor(2, 16)
             }
-            key = KBD.getKey()
+            key = TUI.getKey()
             if (M.isMaintenance()) MaintenanceMode()
         } while (key != '#' && key != '*')
         if(key == '#') {
@@ -165,8 +170,6 @@ class APP {
      * Initializes all basic components and the product list from the PRODUCTS.txt file
      */
     fun init() {
-        HAL.init()
-        SerialEmitter.init()
         TUI.init()
         Products.buildProducts()
         firstProd = getFirstProduct()
@@ -391,8 +394,8 @@ class APP {
     }
 
     /**
-     * Function that sells a product passed as function parameter. Interacts directly with the FileAccess class functions that check
-     * if a coin was inserted, and therefore collected. If the coin value inserted matches the item price, the function proceeds to dispense
+     * Function that sells a product passed as function parameter. Interacts directly with the CoinAcceptor and Products class functions that check
+     * if a coin was inserted, and therefore collected, and modify the product quantity, respectivelly. If the coin value inserted matches the item price, the function proceeds to dispense
      * said product and returns to Home Screen after a farewell message.
      */
     private fun sellProduct(product: Products.Product) {
@@ -415,16 +418,15 @@ class APP {
                 TUI.cursor(1,0)
                 TUI.writeS("Collect Product")
                 TUI.cursor(2,16)
-                SerialEmitter.send(SerialEmitter.Destination.DISPENSER,product.id)
+                Dispenser.dispense(product.id)
                 TUI.cursor(0,0)
                 TUI.writeS("  Thank You!")
                 TUI.cursor(1,0)
                 TUI.writeS("  See You Soon!    ")
                 TUI.cursor(2,16)
                 Time.sleep(2000)
-                FileAccess.addCoins(CoinAcceptor.counter)
-                FileAccess.removeProduct(product.id)
-                Products.products[product.id]!!.quantity-=1
+                CoinDeposit.addCoins(CoinAcceptor.counter)
+                Products.removeProduct(product.id)
                 home()
             }
             if(CoinAcceptor.hasCoin()){
@@ -547,22 +549,22 @@ class APP {
             TUI.cursor(1, 0)
             TUI.writeS("1-Dispense test")
             TUI.cursor(2, 16)
-            key = KBD.waitKey(2000)
+            key = TUI.waitKey(2000)
             if ((key == '1') || (key == '2') || (key == '3') || (key == '4') || !M.isMaintenance()) break
             TUI.cursor(1, 0)
             TUI.writeS("2-Update Prod. ")
             TUI.cursor(2, 16)
-            key = KBD.waitKey(2000)
+            key = TUI.waitKey(2000)
             if ((key == '1') || (key == '2') || (key == '3') || (key == '4') || !M.isMaintenance()) break
             TUI.cursor(1, 0)
             TUI.writeS("3-Remove Prod. ")
             TUI.cursor(2, 16)
-            key = KBD.waitKey(2000)
+            key = TUI.waitKey(2000)
             if ((key == '1') || (key == '2') || (key == '3') || (key == '4') || !M.isMaintenance()) break
             TUI.cursor(1, 0)
             TUI.writeS("4-Shutdown     ")
             TUI.cursor(2, 16)
-            key = KBD.waitKey(2000)
+            key = TUI.waitKey(2000)
             if ((key == '1') || (key == '2') || (key == '3') || (key == '4') || !M.isMaintenance()) break
         } while (true)
         if (!M.isMaintenance()) home()
@@ -603,7 +605,7 @@ class APP {
         TUI.cursor(1,0)
         TUI.writeS("Collect Product")
         TUI.cursor(2,16)
-        SerialEmitter.send(SerialEmitter.Destination.DISPENSER,prod!!.id)
+        Dispenser.dispense(prod!!.id)
         MaintenanceMode()
     }
 
@@ -640,18 +642,18 @@ class APP {
                 TUI.cursor(2,16)
                 counter = 0
                 while(counter<=10) {
-                    key = KBD.waitKey(1000)
+                    key = TUI.waitKey(1000)
                     if(key=='5'){
                         val value:Int  = (""+firstKey+secondKey).toInt()
                         updateProductQuantity(prod.id,value)
                     }
-                    if(key!=KBD.NONE) MaintenanceMode()
+                    if(key!=TUI.NONE) MaintenanceMode()
                     counter++
                 };
             }
             else {
-                key = KBD.waitKey(1000)
-                if(key != KBD.NONE) {
+                key = TUI.waitKey(1000)
+                if(key != TUI.NONE) {
                     if (firstKey == null && key != '*' && key != '#') {
                         firstKey = key
                         TUI.writeC(firstKey)
@@ -678,8 +680,7 @@ class APP {
      * Product Quantity Update function, aditional function to "updateProduct" function
      */
     private fun updateProductQuantity(prodId:Int ,c: Int) {
-        Products.products[prodId]!!.quantity = c
-        FileAccess.updateProduct(prodId,c)
+        Products.updateProduct(prodId,c)
         MaintenanceMode()
     }
 
@@ -707,13 +708,12 @@ class APP {
             TUI.writeS("5-Yes  other-No ")
             TUI.cursor(2,16)
 
-            key = KBD.waitKey(1000)
+            key = TUI.waitKey(1000)
             if(key=='5'){
-                Products.products[prod.id]=null
-                FileAccess.deleteProduct(prod.id)
+                Products.deleteProduct(prod.id)
                 currentProd=firstProd
             }
-            if(key!=KBD.NONE) MaintenanceMode()
+            if(key!=TUI.NONE) MaintenanceMode()
             counter++
         }while(counter<=10)
         MaintenanceMode()
@@ -731,7 +731,7 @@ class APP {
         var counter = 0;
         var key:Char?
         while(counter<=5) {
-            key = KBD.waitKey(1000)
+            key = TUI.waitKey(1000)
             if(key=='5'){
                 TUI.clear()
                 TUI.cursor(0,0)
@@ -740,7 +740,7 @@ class APP {
                 TUI.clear()
                 exitProcess(1)
             }
-            if (key!=KBD.NONE) MaintenanceMode()
+            if (key!=TUI.NONE) MaintenanceMode()
             counter++
         };home()
     }

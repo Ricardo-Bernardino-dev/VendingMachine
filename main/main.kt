@@ -1,4 +1,4 @@
-import main.HAL
+import main.UI.HAL
 import main.KBD
 
 fun main() {

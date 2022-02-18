@@ -1,4 +1,8 @@
-package main
+package main.UI
+
+import main.DATABASE.Products
+import main.KBD
+import main.UI.HAL
 
 
 fun main() {
@@ -6,6 +10,8 @@ fun main() {
 }
 
 object TUI {
+
+    const val NONE = KBD.NONE
 
     //array Produtos (0,1,2,4...)
 
@@ -17,6 +23,15 @@ object TUI {
 
     var isSecondDigit = false
     var firstPressedKey:Char? = null
+
+    fun getKey():Char{
+        return KBD.getKey()
+    }
+
+    fun waitKey(timeout: Long): Char {
+        return KBD.waitKey(timeout)
+    }
+
 
     /**
     Função que determina o modo de escolha através de setas (2 |\ cima, 8 \| baixo), selecionado pelo * e confirma com #.

@@ -1,4 +1,6 @@
-package main
+package main.DATABASE
+
+import java.io.File
 
 object CoinDeposit {
 
@@ -11,4 +13,9 @@ object CoinDeposit {
         val result = currentcoins + 5
         currentcoins = result
     }
+
+    fun addCoins(coinsToAdd:Int): Int {
+        return FileAccess.addCoins(coinsToAdd)
+    }
+
 }

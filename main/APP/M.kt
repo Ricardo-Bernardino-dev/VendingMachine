@@ -1,4 +1,6 @@
-package main
+package main.APP
+
+import main.UI.HAL
 
 object M{
     fun isMaintenance(): Boolean {

@@ -1,4 +1,4 @@
-package main
+package main.UI
 
 import isel.leic.utils.Time
 
@@ -58,6 +58,7 @@ object LCD { // Escreve no LCD usando a interface a 4 bits.
 
 
     fun init() {
+        SerialEmitter.init()
         if (INIT_STATE) return
         Time.sleep(15) //60   15
         writeNibble(false, 0x03)

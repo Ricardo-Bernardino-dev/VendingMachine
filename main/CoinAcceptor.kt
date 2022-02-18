@@ -1,6 +1,7 @@
 package main
 
 import isel.leic.utils.Time
+import main.UI.HAL
 
 object CoinAcceptor { // Implementa a interface com o moedeiro.
     //Usar só setBits e clearBits
@@ -23,7 +24,7 @@ object CoinAcceptor { // Implementa a interface com o moedeiro.
     fun acceptCoin() {
         HAL.setBits(0x10)
         HAL.clrBits(0x10)
-        counter+=5
+        counter +=5
     }
 
 
@@ -32,7 +33,7 @@ object CoinAcceptor { // Implementa a interface com o moedeiro.
         HAL.setBits(0x40)
         Time.sleep(1000)
         HAL.clrBits(0x40)
-        counter=0
+        counter =0
     }
 
 
@@ -41,6 +42,6 @@ object CoinAcceptor { // Implementa a interface com o moedeiro.
         HAL.setBits(0x20)
         Time.sleep(1000)
         HAL.clrBits(0x20)
-        counter=0
+        counter =0
     }
 }

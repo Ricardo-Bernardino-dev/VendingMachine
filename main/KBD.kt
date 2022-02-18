@@ -1,6 +1,7 @@
 package main
 
 import isel.leic.utils.Time
+import main.UI.HAL
 
 object KBD {
     const val NONE = 0.toChar()

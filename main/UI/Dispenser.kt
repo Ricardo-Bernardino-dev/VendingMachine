@@ -1,4 +1,4 @@
-package main
+package main.UI
 
 object Dispenser { // Controla o estado do mecanismo de dispensa.
     // private const val Fn = 0x40 //0100 0000

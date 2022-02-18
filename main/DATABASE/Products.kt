@@ -1,4 +1,4 @@
-package main
+package main.DATABASE
 
 fun main() {
     Products.buildProducts()
@@ -52,6 +52,21 @@ object Products {
         }
     }
 
+    fun removeProduct(id:Int){
+        products[id]!!.quantity-=1
+        FileAccess.removeProduct(id)
+    }
+
+    fun updateProduct(id: Int, quant:Int){
+        products[id]!!.quantity = quant
+        FileAccess.updateProduct(id,quant)
+    }
+
+    fun deleteProduct(id:Int) {
+        products[id] = null
+        FileAccess.deleteProduct(id)
+    }
+
 
     /*
     fun getProduct(id:Int):Product{
@@ -63,16 +78,21 @@ object Products {
     fun editProduct() {
 
     }
-
+    /*
     fun addProduct(id: Int, name: String, quantity: Int, price: Int): String {
         val prod = Product(id, name, quantity, price)
         products.add(id, prod)
         FileAccess.addProduct(id, name, quantity, price)
         return prod.toString()
     }
+     */
 
+
+    /*
     fun removeProduct(id: Int) {
         products.removeAt(id)
     }
+
+     */
 
 }
